@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dama - Paiements Sécurisés</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        :root {
+            --primary: #003087;
+            --primary-light: #0070e0;
+            --secondary: #009cde;
+            --secondary-light: #00c6ff;
+            --dark: #001e45;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --shadow: 0 8px 30px rgba(0, 48, 135, 0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Écrans */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background-color: var(--white);
+            overflow-y: auto;
+        }
+
+        .hidden {
+            transform: translateX(100%);
+        }
+
+        /* En-tête */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 25px 20px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.2;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-text h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .logo-text p {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        /* Carte de solde */
+        .balance-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            position: relative;
+            z-index: 2;
+            margin-top: -40px;
+            margin-left: 20px;
+            margin-right: 20px;
+        }
+
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .balance-title {
+            color: var(--dark);
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .toggle-balance {
+            background: var(--light-gray);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .toggle-balance:hover {
+            background: var(--primary);
+            color: white;
+            transform: rotate(15deg);
+        }
+
+        .balance-amount {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--dark);
+            line-height: 1;
+            margin-bottom: 10px;
+            transition: var(--transition);
+        }
+
+        .balance-hidden {
+            font-size: 36px;
+            letter-spacing: 10px;
+            color: var(--dark);
+        }
+
+        .balance-currency {
+            color: var(--gray);
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        /* Actions principales */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding: 30px 20px 20px;
+        }
+
+        .action-btn {
+            background: white;
+            border: none;
+            border-radius: 16px;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            opacity: 0;
+            transition: var(--transition);
+            z-index: 1;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 48, 135, 0.15);
+        }
+
+        .action-btn:hover::after {
+            opacity: 0.1;
+        }
+
+        .action-btn i {
+            font-size: 28px;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 2;
+            transition: var(--transition);
+        }
+
+        .action-btn:hover i {
+            transform: scale(1.1);
+        }
+
+        .action-btn span {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--dark);
+            position: relative;
+            z-index: 2;
+            transition: var(--transition);
+        }
+
+        .action-btn:hover span {
+            color: var(--primary);
+        }
+
+        .action-btn.payment i { color: #ff0033; }
+        .action-btn.send i { color: #00a650; }
+        .action-btn.withdraw i { color: #ff6b00; }
+        .action-btn.deposit i { color: #8b5cf6; }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            border-top: 1px solid var(--light-gray);
+            z-index: 100;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 8px 15px;
+            border-radius: 12px;
+        }
+
+        .nav-btn i {
+            font-size: 20px;
+            color: var(--gray);
+            transition: var(--transition);
+        }
+
+        .nav-btn span {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--gray);
+            transition: var(--transition);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        }
+
+        .nav-btn.active i,
+        .nav-btn.active span {
+            color: white;
+        }
+
+        .nav-btn:hover:not(.active) {
+            background: var(--light-gray);
+        }
+
+        /* Écran de connexion */
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .login-logo i {
+            font-size: 80px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-logo h1 {
+            font-size: 36px;
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .login-logo p {
+            color: var(--gray);
+            font-size: 14px;
+            max-width: 300px;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            width: 100%;
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 18px 20px;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 48, 135, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 156, 222, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #ff6b6b 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(220, 53, 69, 0.3);
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .error {
+            background: linear-gradient(135deg, #ffe6e6 0%, #ffcccc 100%);
+            color: var(--danger);
+            display: block;
+            border-left: 4px solid var(--danger);
+        }
+
+        .success {
+            background: linear-gradient(135deg, #e6ffe6 0%, #ccffcc 100%);
+            color: var(--success);
+            display: block;
+            border-left: 4px solid var(--success);
+        }
+
+        /* Pages pleine largeur */
+        .full-page {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 25px 20px;
+            position: relative;
+        }
+
+        .page-header-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .page-content {
+            flex: 1;
+            padding: 30px 20px;
+            overflow-y: auto;
+        }
+
+        /* Menu paramètres */
+        .menu-list {
+            list-style: none;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-item {
+            padding: 22px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            transform: translateX(10px);
+        }
+
+        .menu-item:hover .menu-icon,
+        .menu-item:hover .menu-text,
+        .menu-item:hover .menu-arrow {
+            color: white;
+        }
+
+        .menu-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .menu-text {
+            flex: 1;
+            font-weight: 500;
+            color: var(--dark);
+            transition: var(--transition);
+        }
+
+        .menu-arrow {
+            color: var(--gray);
+            transition: var(--transition);
+        }
+
+        /* Pages de contenu */
+        .content-section {
+            margin-bottom: 30px;
+        }
+
+        .content-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        .content-text {
+            line-height: 1.8;
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+
+        /* Modals pleine page */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: white;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .modal-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .modal-content {
+            padding: 30px 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .btn-modal {
+            flex: 1;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-modal-cancel {
+            background: var(--light-gray);
+            color: var(--dark);
+        }
+
+        .btn-modal-cancel:hover {
+            background: #d1d5db;
+        }
+
+        .btn-modal-confirm {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+
+        .btn-modal-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 48, 135, 0.3);
+        }
+
+        /* Instructions Wave */
+        .wave-instructions {
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f2ff 100%);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .wave-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .wave-title i {
+            color: var(--primary);
+        }
+
+        .wave-steps {
+            list-style: none;
+        }
+
+        .wave-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 48, 135, 0.1);
+        }
+
+        .wave-step:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .step-highlight {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .container {
+                max-width: 100%;
+            }
+            
+            .balance-amount {
+                font-size: 36px;
+            }
+            
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+                padding: 25px 15px 15px;
+            }
+            
+            .action-btn {
+                padding: 15px 8px;
+            }
+            
+            .action-btn i {
+                font-size: 24px;
+            }
+            
+            .modal {
+                max-width: 100%;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Utilitaires */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Écran de connexion -->
+        <div class="screen login-screen" id="loginScreen">
+            <div class="login-logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>DAMA</h1>
+                <p>Paiements sécurisés & transferts instantanés</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="phone">Numéro de connexion</label>
+                <input type="tel" class="form-input" id="phone" placeholder="Ex: 783041902" maxlength="9">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="password">Code secret (6 chiffres)</label>
+                <input type="password" class="form-input" id="password" placeholder="●●●●●●" maxlength="6" pattern="\d{6}">
+            </div>
+            
+            <button class="btn btn-primary" id="loginBtn">
+                <i class="fas fa-lock"></i>
+                <span>Connexion sécurisée</span>
+            </button>
+            
+            <div class="message" id="loginMessage"></div>
+            
+            <div style="margin-top: 40px; text-align: center; color: var(--gray); font-size: 13px;">
+                <p>Comptes de démonstration :</p>
+                <p style="margin-top: 10px; background: var(--light-gray); padding: 12px; border-radius: 10px;">
+                    <strong>783041902</strong> / <strong>123456</strong><br>
+                    <strong>771234567</strong> / <strong>654321</strong>
+                </p>
+            </div>
+        </div>
+
+        <!-- Écran principal -->
+        <div class="screen hidden full-page" id="mainScreen">
+            <div class="header">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1>DAMA</h1>
+                        <p id="userPhone">783041902</p>
+                    </div>
+                </div>
+                
+                <div class="balance-card">
+                    <div class="balance-header">
+                        <div class="balance-title">Solde disponible</div>
+                        <button class="toggle-balance" id="toggleBalance">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="balance-amount" id="balanceDisplay">50 000</div>
+                    <div class="balance-currency" id="balanceCurrency">FCFA</div>
+                </div>
+            </div>
+
+            <div class="page-content">
+                <div class="actions-grid">
+                    <button class="action-btn payment" id="paymentBtn">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Paiement</span>
+                    </button>
+                    <button class="action-btn send" id="sendBtn">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Envoyer</span>
+                    </button>
+                    <button class="action-btn withdraw" id="withdrawBtn">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Retirer</span>
+                    </button>
+                    <button class="action-btn deposit" id="depositBtn">
+                        <i class="fas fa-wallet"></i>
+                        <span>Déposer</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="nav">
+                <button class="nav-btn active" data-page="home">
+                    <i class="fas fa-home"></i>
+                    <span>Accueil</span>
+                </button>
+                <button class="nav-btn" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Paramètres</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Page Paramètres -->
+        <div class="screen hidden full-page" id="settingsPage">
+            <div class="page-header">
+                <div class="page-header-content">
+                    <button class="back-btn" data-back="main">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h2 class="page-title">Paramètres</h2>
+                </div>
+            </div>
+
+            <div class="page-content">
+                <ul class="menu-list">
+                    <li class="menu-item" data-page="privacy">
+                        <div class="menu-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="menu-text">Confidentialité</div>
+                        <div class="menu-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </li>
+                    <li class="menu-item" data-page="terms">
+                        <div class="menu-icon">
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                        <div class="menu-text">Conditions d'utilisation</div>
+                        <div class="menu-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </li>
+                    <li class="menu-item" data-page="about">
+                        <div class="menu-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="menu-text">À propos</div>
+                        <div class="menu-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </li>
+                    <li class="menu-item" id="switchAccountBtn">
+                        <div class="menu-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="menu-text">Changer de compte</div>
+                        <div class="menu-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </li>
+                    <li class="menu-item" id="logoutBtn">
+                        <div class="menu-icon">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </div>
+                        <div class="menu-text">Se déconnecter</div>
+                        <div class="menu-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Page Confidentialité -->
+        <div class="screen hidden full-page" id="privacyPage">
+            <div class="page-header">
+                <div class="page-header-content">
+                    <button class="back-btn" data-back="settings">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h2 class="page-title">Confidentialité</h2>
+                </div>
+            </div>
+
+            <div class="page-content">
+                <div class="content-section fade-in">
+                    <h3 class="content-title">Protection de vos données</h3>
+                    <p class="content-text">
+                        Chez Dama, votre vie privée est notre priorité. Nous utilisons des technologies de cryptage avancées pour protéger toutes vos informations personnelles et transactions.
+                    </p>
+                </div>
+
+                <div class="content-section slide-up">
+                    <h3 class="content-title">Collecte des données</h3>
+                    <p class="content-text">
+                        Nous collectons uniquement les informations nécessaires au fonctionnement de nos services :
+                    </p>
+                    <ul style="color: var(--gray); line-height: 1.8; margin-left: 20px; margin-top: 10px;">
+                        <li>Numéro de téléphone pour l'identification</li>
+                        <li>Historique des transactions pour votre suivi</li>
+                        <li>Informations de contact pour le support</li>
+                    </ul>
+                </div>
+
+                <div class="content-section slide-up">
+                    <h3 class="content-title">Sécurité</h3>
+                    <p class="content-text">
+                        Toutes vos données sont stockées sur des serveurs sécurisés avec cryptage AES-256. Nous ne partageons jamais vos informations avec des tiers sans votre consentement explicite.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Conditions d'utilisation -->
+        <div class="screen hidden full-page" id="termsPage">
+            <div class="page-header">
+                <div class="page-header-content">
+                    <button class="back-btn" data-back="settings">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h2 class="page-title">Conditions d'utilisation</h2>
+                </div>
+            </div>
+
+            <div class="page-content">
+                <div class="content-section fade-in">
+                    <h3 class="content-title">Acceptation des conditions</h3>
+                    <p class="content-text">
+                        En utilisant l'application Dama, vous acceptez les présentes conditions générales d'utilisation. Veuillez les lire attentivement avant toute transaction.
+                    </p>
+                </div>
+
+                <div class="content-section slide-up">
+                    <h3 class="content-title">Services proposés</h3>
+                    <p class="content-text">
+                        Dama offre des services de paiement, transfert d'argent, dépôt et retrait via des partenaires financiers agréés. Toutes les transactions sont soumises à vérification de sécurité.
+                    </p>
+                </div>
+
+                <div class="content-section slide-up">
+                    <h3 class="content-title">Responsabilités</h3>
+                    <p class="content-text">
+                        Vous êtes responsable de la confidentialité de vos identifiants de connexion. Dama décline toute responsabilité en cas d'utilisation non autorisée de votre compte.
+                    </p>
+                </div>
+
+                <div class="content-section slide-up">
+                    <h3 class="content-title">Frais de service</h3>
+                    <p class="content-text">
+                        Certaines transactions peuvent être soumises à des frais de service qui vous seront clairement indiqués avant toute validation.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page À propos -->
+        <div class="screen hidden full-page" id="aboutPage">
+            <div class="page-header">
+                <div class="page-header-content">
+                    <button class="back-btn" data-back="settings">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h2 class="page-title">À propos de Dama</h2>
+                </div>
+            </div>
+
+            <div class="page-content">
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <div style="width: 100px; height: 100px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px;">
+                        <i class="fas fa-shield-alt" style="font-size: 48px; color: white;"></i>
+                    </div>
+                    <h3 style="color: var(--dark); margin-bottom: 15px; font-size: 22px;">Dama Payments</h3>
+                    <p style="color: var(--gray); line-height: 1.6;">Version 2.0 • © 2023</p>
+                </div>
+
+                <div class="content-section">
+                    <h3 class="content-title">Notre mission</h3>
+                    <p class="content-text">
+                        Dama révolutionne les paiements en ligne avec une plateforme sécurisée, rapide et intuitive. Notre objectif est de rendre les transactions financières accessibles à tous, partout, à tout moment.
+                    </p>
+                </div>
+
+                <div class="content-section">
+                    <h3 class="content-title">Sécurité</h3>
+                    <p class="content-text">
+                        Nous utilisons les technologies de cryptage les plus avancées pour protéger vos données et transactions. Votre sécurité est notre priorité absolue.
+                    </p>
+                </div>
+
+                <div class="content-section">
+                    <h3 class="content-title">Support</h3>
+                    <p class="content-text">
+                        Notre équipe de support est disponible 24h/24 et 7j/7 pour vous accompagner. Contactez-nous via WhatsApp au <strong>+221 78 304 19 02</strong> pour toute assistance.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Paiement -->
+        <div class="modal-overlay hidden" id="paymentModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <button class="modal-close" data-modal="payment">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="modal-title">Paiement en ligne</div>
+                    <div class="modal-subtitle">Effectuez vos paiements en toute sécurité</div>
+                </div>
+                
+                <div class="modal-content">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #ff0033 0%, #ff6b6b 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                            <i class="fas fa-credit-card" style="font-size: 36px; color: white;"></i>
+                        </div>
+                        <h3 style="color: var(--dark); margin-bottom: 15px; font-size: 20px;">Paiement sécurisé</h3>
+                        <p style="color: var(--gray); line-height: 1.6; margin-bottom: 20px;">
+                            Pour effectuer un paiement en ligne, notre équipe vous accompagne en direct via WhatsApp.
+                        </p>
+                    </div>
+
+                    <div style="background: #f8f9fa; border-radius: 16px; padding: 20px; margin-bottom: 25px;">
+                        <h4 style="color: var(--dark); margin-bottom: 15px; font-size: 16px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-info-circle" style="color: var(--primary);"></i>
+                            Procédure
+                        </h4>
+                        <ol style="color: var(--gray); line-height: 1.8; margin-left: 20px;">
+                            <li>Contactez notre support au <strong>+221 78 304 19 02</strong></li>
+                            <li>Présentez votre demande de paiement</li>
+                            <li>Recevez le lien de paiement sécurisé</li>
+                            <li>Validez la transaction avec votre code secret</li>
+                        </ol>
+                    </div>
+
+                    <div style="text-align: center;">
+                        <p style="color: var(--gray); font-size: 14px;">
+                            <i class="fas fa-shield-alt" style="color: var(--primary); margin-right: 5px;"></i>
+                            Transactions 100% sécurisées et cryptées
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn-modal btn-modal-cancel" data-modal="payment">Annuler</button>
+                    <button class="btn-modal btn-modal-confirm" id="confirmPaymentBtn">Contacter le support</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Retrait -->
+        <div class="modal-overlay hidden" id="withdrawModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <button class="modal-close" data-modal="withdraw">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="modal-title">Retrait d'argent</div>
+                    <div class="modal-subtitle">Retirez vos fonds en toute sécurité</div>
+                </div>
+                
+                <div class="modal-content">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #ff6b00 0%, #ffa726 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                            <i class="fas fa-money-bill-wave" style="font-size: 36px; color: white;"></i>
+                        </div>
+                        <h3 style="color: var(--dark); margin-bottom: 15px; font-size: 20px;">Demande de retrait</h3>
+                        <p style="color: var(--gray); line-height: 1.6;">
+                            Entrez le montant que vous souhaitez retirer de votre compte.
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="withdrawAmount">Montant (FCFA)</label>
+                        <input type="number" class="form-input" id="withdrawAmount" placeholder="Ex: 10000" min="1000">
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-radius: 16px; padding: 20px; margin-top: 20px;">
+                        <h4 style="color: #e65100; margin-bottom: 10px; font-size: 16px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Information importante
+                        </h4>
+                        <p style="color: #e65100; font-size: 14px; line-height: 1.6;">
+                            <strong>Frais de service : 100 FCFA</strong><br>
+                            Le montant total débité sera de <span id="withdrawTotal">0</span> FCFA
+                        </p>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: var(--gray);">Solde actuel</span>
+                            <span style="color: var(--dark); font-weight: 600;" id="currentBalance">50 000 FCFA</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: var(--gray);">Nouveau solde</span>
+                            <span style="color: var(--dark); font-weight: 600;" id="newBalance">50 000 FCFA</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn-modal btn-modal-cancel" data-modal="withdraw">Annuler</button>
+                    <button class="btn-modal btn-modal-confirm" id="confirmWithdrawBtn">Confirmer le retrait</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Dépôt -->
+        <div class="modal-overlay hidden" id="depositModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <button class="modal-close" data-modal="deposit">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="modal-title">Dépôt d'argent</div>
+                    <div class="modal-subtitle">Alimentez votre compte facilement</div>
+                </div>
+                
+                <div class="modal-content">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                            <i class="fas fa-wallet" style="font-size: 36px; color: white;"></i>
+                        </div>
+                        <h3 style="color: var(--dark); margin-bottom: 15px; font-size: 20px;">Demande de dépôt</h3>
+                        <p style="color: var(--gray); line-height: 1.6;">
+                            Entrez le montant que vous souhaitez ajouter à votre compte.
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="depositAmount">Montant (FCFA)</label>
+                        <input type="number" class="form-input" id="depositAmount" placeholder="Ex: 10000" min="1000">
+                    </div>
+
+                    <div class="wave-instructions">
+                        <div class="wave-title">
+                            <i class="fab fa-waze"></i>
+                            Instructions pour Wave
+                        </div>
+                        <ul class="wave-steps">
+                            <li class="wave-step">
+                                <div class="step-number">1</div>
+                                <div class="step-text">
+                                    Ouvrez votre application <span class="step-highlight">Wave</span>
+                                </div>
+                            </li>
+                            <li class="wave-step">
+                                <div class="step-number">2</div>
+                                <div class="step-text">
+                                    Envoyez <span class="step-highlight" id="waveAmount">0</span> FCFA au compte
+                                </div>
+                            </li>
+                            <li class="wave-step">
+                                <div class="step-number">3</div>
+                                <div class="step-text">
+                                    Numéro Wave : <span class="step-highlight">78 304 19 02</span>
+                                </div>
+                            </li>
+                            <li class="wave-step">
+                                <div class="step-number">4</div>
+                                <div class="step-text">
+                                    Attendez la confirmation automatique (2-3 minutes)
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 15px; margin-top: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: var(--gray);">Montant à envoyer</span>
+                            <span style="color: var(--dark); font-weight: 600;" id="depositSendAmount">0 FCFA</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--gray);">Frais de service</span>
+                            <span style="color: var(--dark); font-weight: 600;">100 FCFA</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn-modal btn-modal-cancel" data-modal="deposit">Annuler</button>
+                    <button class="btn-modal btn-modal-confirm" id="confirmDepositBtn">Confirmer le dépôt</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Envoi -->
+        <div class="modal-overlay hidden" id="sendModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <button class="modal-close" data-modal="send">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="modal-title">Envoi d'argent</div>
+                    <div class="modal-subtitle">Transférez des fonds instantanément</div>
+                </div>
+                
+                <div class="modal-content">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #00a650 0%, #00e676 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                            <i class="fas fa-paper-plane" style="font-size: 36px; color: white;"></i>
+                        </div>
+                        <h3 style="color: var(--dark); margin-bottom: 15px; font-size: 20px;">Transfert d'argent</h3>
+                        <p style="color: var(--gray); line-height: 1.6;">
+                            Pour envoyer de l'argent à un bénéficiaire, contactez notre support.
+                        </p>
+                    </div>
+
+                    <div style="background: #e8f5e9; border-radius: 16px; padding: 20px; margin-bottom: 25px;">
+                        <h4 style="color: #2e7d32; margin-bottom: 15px; font-size: 16px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-bolt"></i>
+                            Transfert instantané
+                        </h4>
+                        <ul style="color: #2e7d32; line-height: 1.8; margin-left: 20px;">
+                            <li>Transférez vers n'importe quel réseau mobile</li>
+                            <li>Recevez instantanément (moins de 30 secondes)</li>
+                            <li>Suivi en temps réel de la transaction</li>
+                            <li>Support disponible 24h/24</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: #e3f2fd; border-radius: 16px; padding: 20px;">
+                        <h4 style="color: var(--primary); margin-bottom: 15px; font-size: 16px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-headset"></i>
+                            Contact rapide
+                        </h4>
+                        <p style="color: var(--primary); line-height: 1.6; margin-bottom: 15px;">
+                            Cliquez sur "Contacter le support" pour être redirigé vers notre équipe WhatsApp.
+                        </p>
+                        <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 15px; border-radius: 12px;">
+                            <div style="width: 40px; height: 40px; background: #25D366; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fab fa-whatsapp" style="color: white; font-size: 20px;"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--dark);">WhatsApp Support</div>
+                                <div style="color: var(--gray); font-size: 14px;">+221 78 304 19 02</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn-modal btn-modal-cancel" data-modal="send">Annuler</button>
+                    <button class="btn-modal btn-modal-confirm" id="confirmSendBtn">Contacter le support</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialisation d'EmailJS
+        emailjs.init("21MU3spp1I6pFWegh");
+        
+        // Variables globales
+        let currentUser = null;
+        let balanceVisible = true;
+        
+        // Se connecter
+        async function login() {
+            const phone = document.getElementById('phone').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (!phone || !password) {
+                showMessage('loginMessage', 'Veuillez remplir tous les champs', 'error');
+                return;
+            }
+            
+            if (password.length !== 6 || !/^\d+$/.test(password)) {
+                showMessage('loginMessage', 'Le code secret doit contenir 6 chiffres', 'error');
+                return;
+            }
+            
+            try {
+                showMessage('loginMessage', 'Connexion en cours...', 'success');
+                
+                const response = await fetch('/.netlify/functions/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password }),
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    localStorage.setItem('damaCurrentUser', JSON.stringify(currentUser));
+                    
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('mainScreen').classList.remove('hidden');
+                    
+                    updateBalanceDisplay();
+                } else {
+                    showMessage('loginMessage', data.error || 'Identifiants incorrects', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showMessage('loginMessage', 'Erreur de connexion. Vérifiez votre réseau.', 'error');
+            }
+        }
+        
+        // Mettre à jour l'affichage du solde
+        function updateBalanceDisplay() {
+            if (!currentUser) return;
+            
+            const balanceDisplay = document.getElementById('balanceDisplay');
+            const userPhone = document.getElementById('userPhone');
+            const balanceCurrency = document.getElementById('balanceCurrency');
+            
+            userPhone.textContent = currentUser.phone;
+            balanceCurrency.textContent = currentUser.currency;
+            
+            if (balanceVisible) {
+                balanceDisplay.textContent = currentUser.balance.toLocaleString();
+                balanceDisplay.className = 'balance-amount';
+            } else {
+                balanceDisplay.textContent = '••••••';
+                balanceDisplay.className = 'balance-hidden';
+            }
+        }
+        
+        // Basculer la visibilité du solde
+        function toggleBalanceVisibility() {
+            balanceVisible = !balanceVisible;
+            updateBalanceDisplay();
+            
+            const toggleBtn = document.getElementById('toggleBalance');
+            toggleBtn.innerHTML = balanceVisible ? 
+                '<i class="fas fa-eye"></i>' : 
+                '<i class="fas fa-eye-slash"></i>';
+        }
+        
+        // Afficher un message
+        function showMessage(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `message ${type}`;
+            
+            if (type === 'error') {
+                setTimeout(() => element.classList.add('hidden'), 5000);
+            }
+        }
+        
+        // Se déconnecter
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('damaCurrentUser');
+            
+            document.getElementById('phone').value = '';
+            document.getElementById('password').value = '';
+            
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById('loginScreen').classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.page === 'home') btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+        
+        // Changer de compte
+        function switchAccount() {
+            logout();
+        }
+        
+        // Envoyer un email
+        function sendEmail(templateParams) {
+            return emailjs.send('service_80mctsc', 'template_z13u4ls', templateParams);
+        }
+        
+        // Demander un paiement
+        function requestPayment() {
+            if (!currentUser) return;
+            
+            if (currentUser.balance <= 0) {
+                alert('❌ Solde insuffisant pour effectuer un paiement.');
+                return;
+            }
+            
+            const templateParams = {
+                to_name: 'Support Dama',
+                from_name: currentUser.name,
+                from_phone: currentUser.phone,
+                message: `Demande de paiement - Compte: ${currentUser.phone}, Solde: ${currentUser.balance} ${currentUser.currency}`,
+                reply_to: 'support@dama.com'
+            };
+            
+            sendEmail(templateParams)
+                .then(() => {
+                    alert('✅ Demande envoyée! Notre équipe vous contactera sur WhatsApp.');
+                    window.open(`https://wa.me/221783041902?text=Bonjour,%20je%20souhaite%20effectuer%20un%20paiement%20avec%20Dama%20(${currentUser.phone})`, '_blank');
+                })
+                .catch(error => {
+                    console.error('Email error:', error);
+                    alert('📞 Contactez-nous sur WhatsApp: +221 78 304 19 02');
+                    window.open(`https://wa.me/221783041902`, '_blank');
+                });
+        }
+        
+        // Demander un retrait
+        function requestWithdrawal(amount) {
+            if (!currentUser) return false;
+            
+            const fees = 100;
+            const total = parseInt(amount) + fees;
+            
+            if (currentUser.balance < total) {
+                alert(`❌ Solde insuffisant!\nSolde actuel: ${currentUser.balance.toLocaleString()} FCFA\nMontant nécessaire: ${total.toLocaleString()} FCFA`);
+                return false;
+            }
+            
+            currentUser.balance -= total;
+            localStorage.setItem('damaCurrentUser', JSON.stringify(currentUser));
+            updateBalanceDisplay();
+            
+            const templateParams = {
+                to_name: 'Support Dama',
+                from_name: currentUser.name,
+                from_phone: currentUser.phone,
+                message: `Demande de retrait - Montant: ${amount} FCFA, Nouveau solde: ${currentUser.balance} FCFA`,
+                reply_to: 'support@dama.com'
+            };
+            
+            sendEmail(templateParams)
+                .then(() => console.log('Notification de retrait envoyée'))
+                .catch(error => console.error('Email error:', error));
+            
+            alert(`✅ Retrait de ${parseInt(amount).toLocaleString()} FCFA confirmé!\nFrais: ${fees} FCFA\nNouveau solde: ${currentUser.balance.toLocaleString()} FCFA`);
+            return true;
+        }
+        
+        // Demander un dépôt
+        function requestDeposit(amount) {
+            if (!currentUser) return false;
+            
+            currentUser.balance += parseInt(amount);
+            localStorage.setItem('damaCurrentUser', JSON.stringify(currentUser));
+            updateBalanceDisplay();
+            
+            const templateParams = {
+                to_name: 'Support Dama',
+                from_name: currentUser.name,
+                from_phone: currentUser.phone,
+                message: `Demande de dépôt - Montant: ${amount} FCFA, Nouveau solde: ${currentUser.balance} FCFA`,
+                reply_to: 'support@dama.com'
+            };
+            
+            sendEmail(templateParams)
+                .then(() => console.log('Notification de dépôt envoyée'))
+                .catch(error => console.error('Email error:', error));
+            
+            alert(`✅ Demande de dépôt enregistrée!\nEnvoyez ${(parseInt(amount) - 100).toLocaleString()} FCFA sur Wave (78 304 19 02)\nFrais: 100 FCFA\nNouveau solde après validation: ${currentUser.balance.toLocaleString()} FCFA`);
+            return true;
+        }
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérifier l'utilisateur connecté
+            const savedUser = localStorage.getItem('damaCurrentUser');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('mainScreen').classList.remove('hidden');
+                    updateBalanceDisplay();
+                } catch (e) {
+                    localStorage.removeItem('damaCurrentUser');
+                }
+            }
+            
+            // Connexion
+            document.getElementById('loginBtn').addEventListener('click', login);
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') login();
+            });
+            
+            // Basculer le solde
+            document.getElementById('toggleBalance').addEventListener('click', toggleBalanceVisibility);
+            
+            // Navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const page = this.dataset.page;
+                    
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+                    document.getElementById(page === 'home' ? 'mainScreen' : page + 'Page').classList.remove('hidden');
+                });
+            });
+            
+            // Boutons de retour
+            document.querySelectorAll('.back-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const target = this.dataset.back;
+                    
+                    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+                    
+                    if (target === 'main') {
+                        document.getElementById('mainScreen').classList.remove('hidden');
+                        document.querySelectorAll('.nav-btn').forEach(b => {
+                            b.classList.toggle('active', b.dataset.page === 'home');
+                        });
+                    } else if (target === 'settings') {
+                        document.getElementById('settingsPage').classList.remove('hidden');
+                        document.querySelectorAll('.nav-btn').forEach(b => {
+                            b.classList.toggle('active', b.dataset.page === 'settings');
+                        });
+                    }
+                });
+            });
+            
+            // Menu paramètres
+            document.querySelectorAll('.menu-item[data-page]').forEach(item => {
+                item.addEventListener('click', function() {
+                    const page = this.dataset.page;
+                    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+                    document.getElementById(page + 'Page').classList.remove('hidden');
+                });
+            });
+            
+            // Déconnexion et changement de compte
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('switchAccountBtn').addEventListener('click', switchAccount);
+            
+            // Actions principales
+            document.getElementById('paymentBtn').addEventListener('click', () => {
+                document.getElementById('paymentModal').classList.remove('hidden');
+            });
+            
+            document.getElementById('sendBtn').addEventListener('click', () => {
+                document.getElementById('sendModal').classList.remove('hidden');
+            });
+            
+            document.getElementById('withdrawBtn').addEventListener('click', () => {
+                document.getElementById('withdrawModal').classList.remove('hidden');
+                if (currentUser) {
+                    document.getElementById('currentBalance').textContent = 
+                        `${currentUser.balance.toLocaleString()} FCFA`;
+                    document.getElementById('newBalance').textContent = 
+                        `${currentUser.balance.toLocaleString()} FCFA`;
+                }
+            });
+            
+            document.getElementById('depositBtn').addEventListener('click', () => {
+                document.getElementById('depositModal').classList.remove('hidden');
+            });
+            
+            // Gestion des modals
+            document.querySelectorAll('.modal-close, .btn-modal-cancel').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const modal = this.dataset.modal;
+                    document.getElementById(modal + 'Modal').classList.add('hidden');
+                    
+                    if (modal === 'withdraw') {
+                        document.getElementById('withdrawAmount').value = '';
+                    } else if (modal === 'deposit') {
+                        document.getElementById('depositAmount').value = '';
+                    }
+                });
+            });
+            
+            // Mise à jour des calculs de retrait
+            document.getElementById('withdrawAmount').addEventListener('input', function() {
+                const amount = parseInt(this.value) || 0;
+                const fees = 100;
+                const total = amount + fees;
+                
+                document.getElementById('withdrawTotal').textContent = total.toLocaleString();
+                
+                if (currentUser) {
+                    const newBalance = currentUser.balance - total;
+                    document.getElementById('newBalance').textContent = 
+                        `${newBalance.toLocaleString()} FCFA`;
+                    
+                    document.getElementById('newBalance').style.color = 
+                        newBalance < 0 ? 'var(--danger)' : 'var(--dark)';
+                }
+            });
+            
+            // Mise à jour des calculs de dépôt
+            document.getElementById('depositAmount').addEventListener('input', function() {
+                const amount = parseInt(this.value) || 0;
+                const fees = 100;
+                const sendAmount = amount - fees;
+                
+                document.getElementById('waveAmount').textContent = sendAmount.toLocaleString();
+                document.getElementById('depositSendAmount').textContent = 
+                    `${sendAmount.toLocaleString()} FCFA`;
+            });
+            
+            // Confirmation des actions
+            document.getElementById('confirmPaymentBtn').addEventListener('click', function() {
+                document.getElementById('paymentModal').classList.add('hidden');
+                requestPayment();
+            });
+            
+            document.getElementById('confirmWithdrawBtn').addEventListener('click', function() {
+                const amount = document.getElementById('withdrawAmount').value;
+                
+                if (!amount || parseInt(amount) < 1000) {
+                    alert('⚠️ Montant minimum: 1 000 FCFA');
+                    return;
+                }
+                
+                if (requestWithdrawal(amount)) {
+                    document.getElementById('withdrawModal').classList.add('hidden');
+                    document.getElementById('withdrawAmount').value = '';
+                }
+            });
+            
+            document.getElementById('confirmDepositBtn').addEventListener('click', function() {
+                const amount = document.getElementById('depositAmount').value;
+                
+                if (!amount || parseInt(amount) < 1100) {
+                    alert('⚠️ Montant minimum: 1 100 FCFA (1 000 + 100 de frais)');
+                    return;
+                }
+                
+                if (requestDeposit(amount)) {
+                    document.getElementById('depositModal').classList.add('hidden');
+                    document.getElementById('depositAmount').value = '';
+                }
+            });
+            
+            document.getElementById('confirmSendBtn').addEventListener('click', function() {
+                document.getElementById('sendModal').classList.add('hidden');
+                
+                if (currentUser) {
+                    window.open(`https://wa.me/221783041902?text=Bonjour,%20je%20souhaite%20envoyer%20de%20l'argent%20avec%20Dama%20(${currentUser.phone})`, '_blank');
+                    
+                    const templateParams = {
+                        to_name: 'Support Dama',
+                        from_name: currentUser.name,
+                        from_phone: currentUser.phone,
+                        message: `Demande d'envoi d'argent - Compte: ${currentUser.phone}, Solde: ${currentUser.balance} FCFA`,
+                        reply_to: 'support@dama.com'
+                    };
+                    
+                    sendEmail(templateParams)
+                        .then(() => console.log('Notification envoyée'))
+                        .catch(error => console.error('Email error:', error));
+                }
+            });
+            
+            // Fermer les modals en cliquant à l'extérieur
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.add('hidden');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
